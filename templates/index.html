@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ p.name }} | {{ p.tagline }}</title>
+<meta name="description" content="{{ p.about }}">
+<meta property="og:title" content="{{ p.name }}">
+<meta property="og:description" content="{{ p.tagline }}">
+<meta property="og:image" content="{{ url_for('static', filename='images/profile.jpeg', _external=True) }}">
+<meta property="og:type" content="profile">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<header class="nav"><a href="#top" class="brand">{{ p.name }}</a>
+<nav><a href="#about">About</a><a href="#work">Work</a><a href="#connect">Connect</a><a href="#contact">Contact</a></nav></header>
+<main id="top">
+<section class="hero">
+  <div class="hero-text">
+    <p class="role">{{ p.tagline }}</p>
+    <h1>{{ p.name }}</h1>
+    <p class="sub">{{ p.subtitle }}</p>
+    <div class="actions">
+      <a class="btn primary" href="{{ socials[0].url }}" target="_blank" rel="noopener">Connect on LinkedIn</a>
+      <a class="btn" href="#contact">Send a message</a>
+    </div>
+  </div>
+  <img class="portrait" src="{{ url_for('static', filename='images/profile.jpeg') }}" alt="Portrait of {{ p.name }}">
+</section>
+<section id="about" class="wrap two">
+  <div><h2>About</h2><p class="lead">{{ p.about }}</p></div>
+  <dl class="facts">{% for k, v in p.details %}<div><dt>{{ k }}</dt><dd>{{ v }}</dd></div>{% endfor %}</dl>
+</section>
+<section id="work" class="wrap">
+  <h2>Work and interests</h2>
+  <div class="grid">
+    <article><h3>Project: {{ p.project.name }}</h3><p>{{ p.project.text }}</p></article>
+    <article><h3>What I do at the club</h3><ul class="tags">{% for c in p.club_work %}<li>{{ c }}</li>{% endfor %}</ul></article>
+    <article><h3>Areas of interest</h3><ul class="tags">{% for i in p.interests %}<li>{{ i }}</li>{% endfor %}</ul></article>
+  </div>
+</section>
+<section id="connect" class="wrap">
+  <h2>Connect with me</h2>
+  <div class="chain">
+    {% for s in socials %}
+    <a class="block" href="{{ s.url }}" target="_blank" rel="noopener" aria-label="{{ s.cta }} on {{ s.name }}">
+      <span class="mark">{{ s.mark }}</span>
+      <span class="bt"><strong>{{ s.name }}</strong><small>{{ s.note }}</small></span>
+      <span class="go">{{ s.cta }}</span>
+    </a>{% endfor %}
+  </div>
+</section>
+<section id="contact" class="wrap narrow">
+  <h2>Contact</h2>
+  {% if p.contact_email %}<p>Or email <a href="mailto:{{ p.contact_email }}">{{ p.contact_email }}</a>.</p>{% endif %}
+  <form id="cf">
+    <label>Name<input name="name" required maxlength="100"></label>
+    <label>Email<input name="email" type="email" required maxlength="150"></label>
+    <label>Message<textarea name="message" rows="5" required maxlength="2000"></textarea></label>
+    <button class="btn primary" type="submit">Send message</button>
+    <p id="status" role="status"></p>
+  </form>
+</section>
+</main>
+<footer><span>&copy; {{ p.name }}</span>
+<span>{% for s in socials %}<a href="{{ s.url }}" target="_blank" rel="noopener">{{ s.name }}</a>{% endfor %}</span></footer>
+<script>
+document.getElementById('cf').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target, s = document.getElementById('status');
+  s.textContent = 'Sending...';
+  try {
+    const r = await fetch('/contact', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(Object.fromEntries(new FormData(f)))});
+    const d = await r.json();
+    s.textContent = d.ok ? 'Message sent. Thank you!' : d.error;
+    if (d.ok) f.reset();
+  } catch { s.textContent = 'Could not send. Please try again.'; }
+});
+</script>
+</body>
+</html>
